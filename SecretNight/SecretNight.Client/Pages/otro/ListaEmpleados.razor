@@ -1,0 +1,62 @@
+﻿@page "/listaproductos"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender:false)) //<!-- Configura el renderizado interactivo de la página en WebAssembly sin pre-renderizado -->
+@using Microsoft.AspNetCore.Components.QuickGrid  <!-- Importa QuickGrid para la visualización de datos en forma de tabla -->
+@using SecretNight.Entities.Data  <!-- Importa los datos de la entidad -->
+@using SecretNight.Entities.Models  <!-- Importa los modelos de las entidades -->
+@using System.Net.Http  <!-- Importa las funcionalidades de HTTP para realizar solicitudes -->
+@inject IHttpClientFactory http  // Inyecta IHttpClientFactory para realizar solicitudes HTTP -->
+
+<PageTitle>ListaProducto</PageTitle>  <!-- Título de la página -->
+
+<h3>Listado de Producto</h3>  <!-- Título principal de la página -->
+
+<br />
+
+<!-- QuickGrid es un componente que facilita la visualización de datos en una tabla -->
+<QuickGrid Items="@producto.AsQueryable()" Pagination="@pagination" Class="table table-bordered table-striped">
+    <!-- Configuración de columnas de la tabla -->
+    <PropertyColumn Property="@(x => x.IdProductos)" Title="ID" Sortable="true" Align="Align.Center" />
+    <PropertyColumn Property="@(x => x.Nombre)" Title="NOMBRE" Sortable="true" Align="Align.Center" />
+    <PropertyColumn Property="@(x => x.Precio)" Title="PRECIO" Sortable="true" Align="Align.Center" />
+    <PropertyColumn Property="@(x => x.Talle)" Title="TALLE" Sortable="true" Align="Align.Center" />
+
+    <!-- Columna de acciones, donde se puede agregar un botón u otro componente para realizar acciones sobre cada fila -->
+    <TemplateColumn Title="Acción" Align="Align.Center">
+        <!-- Icono de una persona (puede ser usado para editar o realizar alguna acción) -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+            <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
+        </svg>
+    </TemplateColumn>
+</QuickGrid>
+
+<!-- Componente para la paginación de la tabla -->
+<Paginator State="@pagination" />
+
+@code {
+    // Lista para almacenar los productos obtenidos de la API
+    private List<Producto> producto = new();
+
+    // Estado de la paginación (cuántos elementos por página)
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 3 };
+
+    // URL de la API que devuelve la lista de productos
+    private const string URL = "https://localhost:7047/api/Producto";
+
+    // Método que se ejecuta cuando la página se inicializa
+    protected override async Task OnInitializedAsync() 
+    {
+        // Crea un cliente HTTP para realizar una solicitud
+        using (var httpClient = http.CreateClient())
+        {
+            // Realiza una solicitud GET a la API para obtener la lista de productos
+            var result = await httpClient.GetAsync(URL);
+
+            // Lee la respuesta de la solicitud y convierte el contenido a una lista de productos
+            var response = await result.Content.ReadFromJsonAsync<List<Producto>>();
+
+            // Si la respuesta no es nula, asigna los productos obtenidos a la lista 'producto'
+            if (response != null) 
+                producto = response;
+        }
+    }
+}

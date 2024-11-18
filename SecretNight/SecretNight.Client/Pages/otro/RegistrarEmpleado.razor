@@ -1,0 +1,122 @@
+﻿@page "/registrarproducto"
+<PageTitle>Registrar Producto</PageTitle>
+
+@using SecretNight.Entities.Data
+@using SecretNight.Entities.Models
+@using System.Net.Http
+@inject IHttpClientFactory http
+
+<h3>Registrar Producto</h3>
+
+<!-- Alerta de éxito que se muestra cuando el producto se registra correctamente -->
+<div class="alert alert-success @MessageBoxCss" role="alert">
+    <h4 class="alert-heading">Producto registrado correctamente</h4>
+    <!-- Botón que redirige a la vista anterior al hacer clic -->
+    <button class="col-md-2 btn btn-primary" @onclick="OcultarLeyenda">Volver</button>
+</div>
+
+<!-- Alerta de error que se muestra cuando hay un problema al registrar el producto -->
+<div class="alert alert-danger @AlertCss" role="alert">
+    <h4 class="alert-heading">Error al intentar registrar el producto</h4>
+    <p>Revise que los datos cargados hayan sido ingresados correctamente</p>
+    <!-- Botón para volver a intentar -->
+    <button class="col-md-2 btn btn-primary" @onclick="OcultarLeyenda">Volver</button>
+</div>
+
+<!-- Formulario para registrar el producto -->
+<div class="@FormCss">
+    <EditForm Model="producto" OnSubmit="Enviar">
+        <!-- Valida las anotaciones de datos del modelo -->
+        <DataAnnotationsValidator />
+
+        <!-- Entrada para el nombre del producto -->
+        <div class="form-group row">
+            <label for="nombre" class="col-md-2 col-form-label">Nombre:</label>
+            <div class="col-md-4">
+                <InputText id="nombre" class="form-control" @bind-Value="producto.Nombre" />
+                <ValidationMessage For="@(() => producto.Nombre)" />
+            </div>
+        </div>
+        <br />
+
+        <!-- Entrada para el precio del producto -->
+        <div class="form-group row">
+            <label for="precio" class="col-md-2 col-form-label">Precio:</label>
+            <div class="col-md-4">
+                <InputNumber id="precio" class="form-control" @bind-Value="producto.Precio" />
+                <ValidationMessage For="@(() => producto.Precio)" />
+            </div>
+        </div>
+        <br />
+
+        <!-- Entrada para la descripción del producto (talle) -->
+        <div class="form-group row">
+            <label for="Talle" class="col-md-2 col-form-label">Descripción:</label>
+            <div class="col-md-4">
+                <InputText id="talle" class="form-control" @bind-Value="producto.Talle" />
+                <ValidationMessage For="@(() => producto.Talle)" />
+            </div>
+        </div>
+        <br />
+
+        <!-- Botón para enviar el formulario -->
+        <button class="col-md-2 btn btn-primary" type="submit">Aceptar</button>
+        <!-- Botón para resetear el formulario -->
+        <button class="col-md-2 btn btn-danger" @onclick="Reset">Resetear</button>
+    </EditForm>
+</div>
+
+@code {
+    // Propiedad para almacenar el producto
+    public Producto producto { get; set; } = new Producto();
+
+    // URL base de la API
+    private const string URL = "https://localhost:7047/api/Producto";
+
+    // Control de la visibilidad de los mensajes de éxito y error
+    private string MessageBoxCss { get; set; } = "oculto";  // Mensaje de éxito
+    private string FormCss { get; set; } = "visible";      // Formulario
+    private string AlertCss { get; set; } = "oculto";      // Mensaje de error
+
+    // Método que se ejecuta cuando se envía el formulario
+    private async Task Enviar()
+    {
+        using (var httpClient = http.CreateClient())
+        {
+            // Se configura la dirección base del cliente HTTP
+            httpClient.BaseAddress = new Uri("https://localhost:7047/");
+
+            // Se envía el objeto producto a la API mediante POST
+            var result = await httpClient.PostAsJsonAsync("api/Producto", producto);
+
+            // Verifica si la respuesta es exitosa
+            if (result.IsSuccessStatusCode)
+            {
+                // Si el producto se registró exitosamente, se muestra el mensaje de éxito
+                MessageBoxCss = "visible";
+                FormCss = "oculto";
+            }
+            else
+            {
+                // Si ocurrió un error, se muestra el mensaje de error
+                FormCss = "oculto";
+                AlertCss = "visible";
+            }
+        }
+    }
+
+    // Método para resetear los campos del formulario
+    private void Reset()
+    {
+        producto = new Producto(); // Reinicia el objeto producto
+    }
+
+    // Método para ocultar las leyendas de éxito y error y mostrar el formulario nuevamente
+    private void OcultarLeyenda()
+    {
+        MessageBoxCss = "oculto";
+        AlertCss = "oculto";
+        FormCss = "visible";
+        Reset();
+    }
+}

@@ -1,0 +1,156 @@
+﻿@page "/eliminarproducto"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender:false))
+<PageTitle>Eliminar producto</PageTitle>
+@using SecretNight.Entities.Data
+@using SecretNight.Entities.Models
+@using System.Net.Http
+@using System.Net.Http.Headers
+@inject IHttpClientFactory http
+<h3>Eliminar Producto</h3>
+<br />
+<EditForm Model="producto" OnSubmit="Buscar">
+    <div class="form-group row">
+        <label for="id_producto" class="col-md-2 col-form-label">Ingrese el ID Producto:</label>
+        <div class="col-md-4">
+            <InputNumber id="id_producto" class="form-control" @bind-Value="productoid" />
+        </div>
+    </div>
+    <br />Producto />
+    <div>
+        <button class="col-md-2 btn btn-primary" type="submit">Buscar Producto</button>
+        <button class="col-md-2 btn btn-danger" type="reset" @onclick="Ocultar">Resetear Eliminacion</button>
+    </div>
+</EditForm>
+<div class="alert alert-warning @AlertCSS" role="alert">
+    Error el producto buscado no Existe!!
+</div>
+<br />
+<div class="alert alert-success @SuccessCSS" role="alert">
+    El producto ha sido Eliminado Exitosamente!!
+</div>
+<br />
+<div class="alert alert-danger @ErrorCSS" role="alert">
+    Hubo un Error al intentar Eliminar el Producto!!
+</div>
+<br />
+<div class="container mt-4">
+    @if (showCard)
+    {
+        <div class="card mt-3 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="square-image-container mb-3">
+                            <img src="/images/producto.png" alt="Foto del producto" class="img-fluid rounded">
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h5 class="card-title">Información del producto</h5>
+                        <br />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>ID:</strong> @producto.IdProductos</p>
+                                <p><strong>Nombre:</strong> @producto.Nombre</p>
+                                <p><strong>Precio:</strong> @producto.Precio</p>
+                                <p><strong>Talle:</strong> @producto.Talle</p>                                
+                            </div>
+                        </div>
+                        <button class="col-md-4 btn btn-info text-white" @onclick="Eliminar">Confirma Eliminar producto</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+
+@code {
+
+    public Producto producto { get; set; } = default!;
+    private const string URL_SEARCH = "https://localhost:7047/api/Producto";
+    private const string URL_DELETE = "https://localhost:7047/api/Producto";
+    private int productoid;
+    private string AlertCSS = "oculto";
+    private string SuccessCSS = "oculto";
+    private string ErrorCSS = "oculto";
+    private bool showCard = false;
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        this.productoid = 0;
+        this.producto = new();
+    }
+
+    public async Task Buscar()
+    {
+        using (var httpClient = http.CreateClient())
+        {
+            using (var request = new HttpRequestMessage())
+            {
+                request.Method = HttpMethod.Get;
+                request.RequestUri = new Uri(URL_SEARCH);
+                request.Headers.Add("id", productoid.ToString());
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var result = await httpClient.SendAsync(request);
+                if (result.IsSuccessStatusCode)
+                {
+                    var aux = await result.Content.ReadFromJsonAsync<Producto>();
+                    if (aux is not null)
+                    {
+                        producto = aux;
+                        if (!showCard) showCard = true;
+                        AlertCSS = "oculto";
+                    }
+                }
+                else
+                {
+                    showCard = false;
+                    AlertCSS = "visible";
+                }
+            }
+
+        }
+
+    }
+
+    public async Task Eliminar()
+    {
+        using (var httpClient = http.CreateClient())
+        {
+            using (var request = new HttpRequestMessage())
+            {
+                request.Method = HttpMethod.Delete;
+                request.RequestUri = new Uri(URL_DELETE);
+                request.Headers.Add("id", productoid.ToString());
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var result = await httpClient.SendAsync(request);
+                if (result.IsSuccessStatusCode)
+                {
+
+                    showCard = false;
+                    SuccessCSS = "visible";
+
+                }
+                else
+                {
+                    showCard = false;
+                    ErrorCSS = "visible";
+                }
+            }
+
+        }
+
+    }
+
+    private void Ocultar()
+    {
+        AlertCSS = "oculto";
+        SuccessCSS = "oculto";
+        ErrorCSS = "oculto";
+        showCard = false;
+
+    }
+
+}

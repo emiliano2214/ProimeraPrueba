@@ -1,0 +1,8 @@
+﻿.oculto {
+    display: none ;
+}
+
+.visible {
+    display: inherit;
+}
+
